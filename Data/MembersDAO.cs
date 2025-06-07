@@ -1,14 +1,14 @@
 ﻿
 using DotNet_API.Domain;
-
+using Microsoft.EntityFrameworkCore;
 
 namespace DotNet_API.Data
 {
     public class MembersDAO
     {
-        private readonly DbContext _context;
+        private readonly MemberContext _context;
 
-        public MembersDAO(DbContext context)
+        public MembersDAO(MemberContext context)
         {
             _context = context;
         }
@@ -53,3 +53,4 @@ namespace DotNet_API.Data
     }
 
 
+}
