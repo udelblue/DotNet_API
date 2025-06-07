@@ -1,4 +1,5 @@
 ﻿using DotNet_API.Domain;
+using DotNet_API.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DotNet_API.Controllers
@@ -9,62 +10,79 @@ namespace DotNet_API.Controllers
     [Route("[controller]")]
     public class MembersController : ControllerBase
     {
-        private readonly ILogger<MembersController> _logger; // Corrected type to match PersonController
-        private static readonly Member[] People = new[]
-        {
-            new Member
-            {
-                Id = 1,
-                FirstName = "John",
-                LastName = "Doe",
-                DateOfBirth = new DateTime(1990, 1, 1),
-                Email = "john.doe@example.com",
-                PhoneNumber = "123-456-7890",
-                Address = "123 Main St",
-                City = "Anytown",
-                State = "CA",
-                ZipCode = "90001",
-                Country = "USA"
-            },
-            new Member
-            {
-                Id = 2,
-                FirstName = "Jane",
-                LastName = "Smith",
-                DateOfBirth = new DateTime(1985, 5, 15),
-                Email = "jane.smith@example.com",
-                PhoneNumber = "987-654-3210",
-                Address = "456 Oak Ave",
-                City = "Othertown",
-                State = "NY",
-                ZipCode = "10001",
-                Country = "USA"
-            }
-        };
+        private readonly ILogger<MembersController> _logger;
+        private readonly MemberServices _memberServices;
 
-        public MembersController(ILogger<MembersController> logger)
+        public MembersController(ILogger<MembersController> logger, MemberServices memberServices)
         {
             _logger = logger;
+            _memberServices = memberServices;
         }
 
-        [HttpGet(Name = "GetMembers")]
-        public IEnumerable<Member> Get()
+
+        [HttpGet(Name = "GetAllMembers")]
+        public IEnumerable<Member> GetAllMembers()
         {
-            IEnumerable<Member> people = People.Select(person => new Member
-            {
-                Id = person.Id,
-                FirstName = person.FirstName,
-                LastName = person.LastName,
-                DateOfBirth = person.DateOfBirth,
-                Email = person.Email,
-                PhoneNumber = person.PhoneNumber,
-                Address = person.Address,
-                City = person.City,
-                State = person.State,
-                ZipCode = person.ZipCode,
-                Country = person.Country
-            });
-            return people;
+            return _memberServices.get_all_members().Result;
         }
+
+        [HttpGet(Name = "GetMemberByID")]
+        public Member GetMemberByID(int id)
+        {
+            var member = _memberServices.get_member_by_id(id).Result;
+            if (member == null)
+            {
+                throw new KeyNotFoundException($"Member with ID {id} not found.");
+            }
+            return member;
+        }
+        [HttpPost(Name = "AddMember")]
+        public async Task<ActionResult<Member>> AddMember([FromBody] Member member)
+        {
+            if (member == null)
+            {
+                return BadRequest("Member data is required.");
+            }
+
+            try
+            {
+                var createdMember = await _memberServices.add_member(member);
+                return CreatedAtRoute("GetMemberByID", new { id = createdMember.Id }, createdMember);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error adding member.");
+                return StatusCode(500, "An error occurred while adding the member.");
+            }
+        }
+        [HttpPut("{id}", Name = "UpdateMember")]
+        public async Task<ActionResult> UpdateMember(int id, [FromBody] Member member)
+        {
+            if (member == null || member.Id != id)
+            {
+                return BadRequest("Member data is invalid or ID mismatch.");
+            }
+
+            try
+            {
+                var existingMember = await _memberServices.get_member_by_id(id);
+                if (existingMember == null)
+                {
+                    return NotFound($"Member with ID {id} not found.");
+                }
+
+                await _memberServices.update_member(member);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error updating member with ID {id}.");
+                return StatusCode(500, "An error occurred while updating the member.");
+            }
+        }
+
+
+
+
     }
 }
