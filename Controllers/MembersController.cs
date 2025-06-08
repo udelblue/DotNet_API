@@ -7,6 +7,7 @@ namespace DotNet_API.Controllers
 
 
     [ApiController]
+    [Route("api/[controller]")]
     public class MembersController : ControllerBase
     {
         private readonly ILogger<MembersController> _logger;
@@ -18,15 +19,13 @@ namespace DotNet_API.Controllers
             _memberServices = memberServices;
         }
 
-        [Route("GetAllMembers")]
-        [HttpGet]
+        [HttpGet("GetAllMembers")]
         public IEnumerable<Member> GetAllMembers()
         {
             return _memberServices.get_all_members().Result;
         }
 
-        [Route("GetByID/{id}")]
-        [HttpGet]
+        [HttpGet("GetByID/{id}", Name = "GetMemberByID")]
         public ActionResult<Member> GetMemberByID(int id)
         {
             var member = _memberServices.get_member_by_id(id).Result;
@@ -38,9 +37,7 @@ namespace DotNet_API.Controllers
             return Ok(member);
         }
 
-
-        [Route("Add")]
-        [HttpPost]
+        [HttpPost("Add")]
         public async Task<ActionResult<Member>> AddMember([FromBody] Member member)
         {
             if (member == null)
@@ -51,6 +48,7 @@ namespace DotNet_API.Controllers
             try
             {
                 var createdMember = await _memberServices.add_member(member);
+                // This will now resolve correctly
                 return CreatedAtRoute("GetMemberByID", new { id = createdMember.Id }, createdMember);
             }
             catch (Exception ex)
@@ -60,15 +58,11 @@ namespace DotNet_API.Controllers
             }
         }
 
-
-        [Route("Delete/{id}")]
-        [HttpPut]
-        public async Task<ActionResult> UpdateMember(int id, [FromBody] Member member)
+        [HttpPut("Delete/{id}")]
+        public async Task<ActionResult> UpdateMember(int id)
         {
-            if (member == null || member.Id != id)
-            {
-                return BadRequest("Member data is invalid or ID mismatch.");
-            }
+
+
 
             try
             {
@@ -78,7 +72,7 @@ namespace DotNet_API.Controllers
                     return NotFound($"Member with ID {id} not found.");
                 }
 
-                await _memberServices.update_member(member);
+                await _memberServices.delete_member(existingMember.Id);
                 return NoContent();
             }
             catch (Exception ex)
@@ -87,9 +81,5 @@ namespace DotNet_API.Controllers
                 return StatusCode(500, "An error occurred while updating the member.");
             }
         }
-
-
-
-
     }
 }
