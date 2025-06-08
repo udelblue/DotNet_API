@@ -1,8 +1,10 @@
 ﻿### API
 
+A simple .net core 9 api. This has a controller with members endpoints. 
 
 
 ## API Documentation
 
 Swagger UI is available at:
-swagger/index.html
+
+[Docker_Port]/swagger/index.html
