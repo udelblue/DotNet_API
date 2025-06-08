@@ -22,17 +22,21 @@ namespace DotNet_API.Controllers
         [HttpGet("GetAllMembers")]
         public IEnumerable<Member> GetAllMembers()
         {
+            _logger.LogInformation("GetAllMembers was called.");
             return _memberServices.get_all_members().Result;
         }
 
         [HttpGet("GetByID/{id}", Name = "GetMemberByID")]
         public ActionResult<Member> GetMemberByID(int id)
         {
+
             var member = _memberServices.get_member_by_id(id).Result;
             if (member == null)
             {
                 return NotFound($"Member with ID {id} not found.");
             }
+
+            _logger.LogInformation("GetByID called for ID {id}.", id.ToString());
 
             return Ok(member);
         }
@@ -48,6 +52,8 @@ namespace DotNet_API.Controllers
             try
             {
                 var createdMember = await _memberServices.add_member(member);
+
+                _logger.LogInformation("Add called for  {json}.", createdMember.ToJson());
                 // This will now resolve correctly
                 return CreatedAtRoute("GetMemberByID", new { id = createdMember.Id }, createdMember);
             }
@@ -72,6 +78,7 @@ namespace DotNet_API.Controllers
                     return NotFound($"Member with ID {id} not found.");
                 }
 
+                _logger.LogInformation("Delete called for ID {id}.", id.ToString());
                 await _memberServices.delete_member(existingMember.Id);
                 return NoContent();
             }

@@ -1,4 +1,6 @@
-﻿namespace DotNet_API.Domain
+﻿using System.Text.Json;
+
+namespace DotNet_API.Domain
 {
     public class Member
     {
@@ -16,6 +18,14 @@
         public string? Country { get; set; } = string.Empty;
 
         public bool isActive { get; set; } = true;
+
+        public string ToJson()
+        {
+            return JsonSerializer.Serialize(this);
+        }
+
+
+
 
     }
 }
