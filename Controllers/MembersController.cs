@@ -7,11 +7,10 @@ namespace DotNet_API.Controllers
 
 
     [ApiController]
-    [Route("[controller]")]
     public class MembersController : ControllerBase
     {
         private readonly ILogger<MembersController> _logger;
-        private readonly MemberServices _memberServices;
+        private MemberServices _memberServices;
 
         public MembersController(ILogger<MembersController> logger, MemberServices memberServices)
         {
@@ -19,24 +18,29 @@ namespace DotNet_API.Controllers
             _memberServices = memberServices;
         }
 
-
-        [HttpGet(Name = "GetAllMembers")]
+        [Route("GetAllMembers")]
+        [HttpGet]
         public IEnumerable<Member> GetAllMembers()
         {
             return _memberServices.get_all_members().Result;
         }
 
-        [HttpGet(Name = "GetMemberByID")]
-        public Member GetMemberByID(int id)
+        [Route("GetByID/{id}")]
+        [HttpGet]
+        public ActionResult<Member> GetMemberByID(int id)
         {
             var member = _memberServices.get_member_by_id(id).Result;
             if (member == null)
             {
-                throw new KeyNotFoundException($"Member with ID {id} not found.");
+                return NotFound($"Member with ID {id} not found.");
             }
-            return member;
+
+            return Ok(member);
         }
-        [HttpPost(Name = "AddMember")]
+
+
+        [Route("Add")]
+        [HttpPost]
         public async Task<ActionResult<Member>> AddMember([FromBody] Member member)
         {
             if (member == null)
@@ -55,7 +59,10 @@ namespace DotNet_API.Controllers
                 return StatusCode(500, "An error occurred while adding the member.");
             }
         }
-        [HttpPut("{id}", Name = "UpdateMember")]
+
+
+        [Route("Delete/{id}")]
+        [HttpPut]
         public async Task<ActionResult> UpdateMember(int id, [FromBody] Member member)
         {
             if (member == null || member.Id != id)
